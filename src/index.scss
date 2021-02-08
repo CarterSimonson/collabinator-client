@@ -1,0 +1,53 @@
+@import url("https://fonts.googleapis.com/css2?family=Open+Sans&display=swap");
+@import "styles/colors.scss";
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  min-height: 100vh;
+}
+
+body {
+  font-family: "Open Sans", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: $grey-100;
+}
+
+#root {
+  display: flex;
+  width: 100vw;
+  min-height: 100vh;
+}
+
+input, textarea {
+  outline: none;
+  border: none;
+  background-color: $grey-200;
+  color: $grey-800;
+  padding: 12px;
+  border-radius: 8px;
+  font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  font-size: 16px;
+}
+
+input:focus {
+  border: none;
+}
+
+button {
+  border: none;
+  outline: none;
+  border-radius: 8px;
+  padding: 12px;
+  color: $grey-100;
+  background-color: $grey-800;
+  font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  font-size: 16px;
+  cursor: pointer;
+
+  &:hover {
+    background-color: $grey-700;
+  }
+}

@@ -1,0 +1,6 @@
+@import "styles/colors.scss";
+
+.draw-canvas {
+    z-index: 1;
+    touch-action: none;
+}
