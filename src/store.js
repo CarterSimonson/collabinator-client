@@ -2,14 +2,13 @@ import create from 'zustand'
 
 
 const useStore = create(set => ({
-    lines: [],
-    addLine: (line) => set(state => {
+    history: [],
+    addToHistory: (instance) => set(state => {
         return {
-            lines: [...state.lines, line],
+            history: [...state.history, instance],
             undoStack: []
-        };
+        }
     }),
-    clearLines: () => set({lines: []}),
 
     currentLine: [],
     addToCurrentLine: (stroke) => set(state => ({ currentLine: [...state.currentLine, stroke]})),
@@ -17,14 +16,14 @@ const useStore = create(set => ({
 
     undoStack: [],
     undo: () => set(state => {
-        if(state.lines.length === 0) {
+        if(state.history.length === 0) {
             return;
         }
 
-        const lastIndex = state.lines.length - 1;
+        const lastIndex = state.history.length - 1;
         return {
-            lines: state.lines.slice(0, lastIndex),
-            undoStack: [...state.undoStack, state.lines[lastIndex]]
+            history: state.history.slice(0, lastIndex),
+            undoStack: [...state.undoStack, state.history[lastIndex]]
         };
     }),
     redo: () => set(state => {
@@ -34,7 +33,7 @@ const useStore = create(set => ({
 
         const lastIndex = state.undoStack.length - 1;
         return {
-            lines: [...state.lines, state.undoStack[lastIndex]],
+            history: [...state.history, state.undoStack[lastIndex]],
             undoStack: state.undoStack.slice(0, lastIndex)
         }
     }),
