@@ -1,6 +1,5 @@
 import create from 'zustand'
 
-
 const useStore = create(set => ({
     history: [],
     addToHistory: (instance) => set(state => {

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import "./DrawArea.scss";
 import useStore from "store";
 
@@ -136,7 +136,6 @@ const DrawArea = (props) => {
             onPointerUp={pointerUp}
             onPointerMove={pointerMove}
         />
-        {/* <RenderArea lines={lines} currentLine={currentLine}/> */}
     </>
 }
 
