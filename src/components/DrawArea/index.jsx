@@ -1,53 +1,48 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import "./DrawArea.scss";
 import useStore from "store";
+import useCanvas from "hooks/useCanvas";
+import useSession from "hooks/useSession";
 
-const BRUSH_SIZE = 20;
+const drawLineSection = (context, startNode, endNode, size, color) => {
+    const { x: startX, y: startY } = startNode;
+    const { x: endX, y: endY } = endNode;
+
+    context.strokeStyle = color;
+    context.lineWidth = size;
+    context.lineCap = "round";
+
+    const xC = (startX + endX) / 2;
+    const yC = (startY + endY) / 2;
+    context.quadraticCurveTo(startX, startY, xC, yC);
+
+    context.stroke();
+};
+
+const drawLine = (context, nodes, size, color) => {    
+    context.beginPath();
+    for(let i = 1; i < nodes.length; i++) {
+        const startNode = nodes[i - 1];
+        const endNode = nodes[i];
+        drawLineSection(context, startNode, endNode, size, color);
+    }
+}
 
 const DrawArea = (props) => {
     const { width, height } = props;
-    const canvasRef = useRef(null);
-    const [canvas, setCanvas] = useState(null);
-    const [context, setContext] = useState(null);
-    
+    const [newInteraction, addInteraction] = useSession();
+
+    const [canvasRef, canvas, context] = useCanvas();
     const [lastCoords, setLastCoords] = useState(null);
     
     const history = useStore(state => state.history);
     const addToHistory = useStore(state => state.addToHistory);
     const currentLine = useStore(state => state.currentLine);
+    const startCurrentLine = useStore(state => state.startCurrentLine);
     const addToCurrentLine = useStore(state => state.addToCurrentLine);
     const clearCurrentLine = useStore(state => state.clearCurrentLine);
-    const currentColor = useStore(state => state.color);
 
     //Helper functions
-    const calculateBrushSize = (pressure) => {
-        const calculatedSize = pressure * BRUSH_SIZE;
-        
-        if(currentLine.length > 0) {
-            const lastSize = currentLine[currentLine.length - 1].size;
-            const weightedSize = (lastSize * 4 + calculatedSize) / 5;
-            return weightedSize;
-        }
-        else {
-            return calculatedSize;
-        }
-    }
-
-    const drawLine = (stroke) => {
-        const { x: endX, y: endY, size, color } = stroke;
-        const startX = lastCoords.x;
-        const startY = lastCoords.y;
-
-        context.strokeStyle = color;
-        context.lineWidth = size;
-        context.lineCap = "round";
-
-        const xC = (startX + endX) / 2;
-        const yC = (startY + endY) / 2;
-        context.quadraticCurveTo(startX, startY, xC, yC);
-
-        context.stroke();
-    };
 
     const getCanvasData = () => {
         return context.getImageData(0, 0, canvas.width, canvas.height);
@@ -64,6 +59,7 @@ const DrawArea = (props) => {
         context.beginPath();
 
         const { clientX: x, clientY: y } = event;
+        startCurrentLine();
         setLastCoords({ x, y });
     }
 
@@ -71,18 +67,11 @@ const DrawArea = (props) => {
         const { clientX: x, clientY: y, pressure } = event;
 
         if(lastCoords && pressure > 0) {
-            const brushSize = calculateBrushSize(pressure);
+            const node = { x, y };
 
-            const stroke = {
-                x,
-                y,
-                size: brushSize,
-                color: currentColor
-            }
-
-            addToCurrentLine(stroke);
-            drawLine(stroke);
-            setLastCoords({ x, y });
+            addToCurrentLine(node);
+            drawLineSection(context, lastCoords, node, currentLine.size, currentLine.color);
+            setLastCoords(node);
         }
     }
 
@@ -95,21 +84,11 @@ const DrawArea = (props) => {
 
         const canvasData = getCanvasData();
 
+        addInteraction(currentLine);
         clearCurrentLine();
         setLastCoords(null);
         addToHistory(canvasData);
     }
-
-    useEffect(() => {
-        if(!canvasRef) {
-            return;
-        }
-
-        const canvas = canvasRef.current;
-        const context = canvasRef.current.getContext("2d");
-        setCanvas(canvas);
-        setContext(context);
-    }, [canvasRef]);
 
     useEffect(() => {
         if(!context || !canvas) {
@@ -125,6 +104,15 @@ const DrawArea = (props) => {
         const currentInstance = history[history.length - 1];
         context.putImageData(currentInstance, 0, 0);
     }, [context, canvas, history]);
+
+    useEffect(() => {
+        if(!context || !newInteraction) { 
+            return;
+        }
+
+        const { color, nodes, size } = newInteraction.data;
+        drawLine(context, nodes, size, color);
+    }, [newInteraction, context]);
 
     return <>
         <canvas

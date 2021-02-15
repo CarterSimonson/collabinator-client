@@ -1,6 +1,17 @@
 import create from 'zustand'
 
 const useStore = create(set => ({
+    session: undefined,
+    setSession: (session) => set({ session }),
+    addInteraction: (interaction) => set(state => {
+        return {
+            session: {
+                ...state.session,
+                interactions: [...state.session.interactions, interaction]
+            }
+        }
+    }),
+
     history: [],
     addToHistory: (instance) => set(state => {
         return {
@@ -9,9 +20,21 @@ const useStore = create(set => ({
         }
     }),
 
-    currentLine: [],
-    addToCurrentLine: (stroke) => set(state => ({ currentLine: [...state.currentLine, stroke]})),
-    clearCurrentLine: () => set({currentLine: []}),
+    currentLine: {},
+    startCurrentLine: () => set((state) => ({
+        currentLine: {
+            color: state.color,
+            size: state.size,
+            nodes: []
+        }
+    })),
+    addToCurrentLine: (node) => set(state => ({
+        currentLine: {
+            ...state.currentLine,
+            nodes: [...state.currentLine.nodes, node]
+        }
+    })),
+    clearCurrentLine: () => set({currentLine: {}}),
 
     undoStack: [],
     undo: () => set(state => {
@@ -39,6 +62,9 @@ const useStore = create(set => ({
 
     color: "#000000",
     setColor: (color) => set({ color }),
+
+    size: 10,
+    setSize: (size) => set({ size }),
 }));
 
 export default useStore;
