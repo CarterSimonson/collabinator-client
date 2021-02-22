@@ -1,52 +1,25 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import "./DrawArea.scss";
+import { drawLineSection, clearCanvas, getEncodedCanvasData, pasteBase64 } from "util/drawUtil";
 import useStore from "store";
 import useCanvas from "hooks/useCanvas";
-import useSession from "hooks/useSession";
-
-const drawLineSection = (context, startNode, endNode, size, color) => {
-    const { x: startX, y: startY } = startNode;
-    const { x: endX, y: endY } = endNode;
-
-    context.strokeStyle = color;
-    context.lineWidth = size;
-    context.lineCap = "round";
-
-    const xC = (startX + endX) / 2;
-    const yC = (startY + endY) / 2;
-    context.quadraticCurveTo(startX, startY, xC, yC);
-
-    context.stroke();
-};
-
-const drawLine = (context, nodes, size, color) => {    
-    context.beginPath();
-    for(let i = 1; i < nodes.length; i++) {
-        const startNode = nodes[i - 1];
-        const endNode = nodes[i];
-        drawLineSection(context, startNode, endNode, size, color);
-    }
-}
+import { ADD } from "constants/interactionActions";
 
 const DrawArea = (props) => {
-    const { width, height } = props;
-    const [newInteraction, addInteraction] = useSession();
+    const { width, height, session, addInteraction } = props;
 
-    const [canvasRef, canvas, context] = useCanvas();
+    const history = useStore(state => state.history);
+    const baseInteraction = useStore(state => state.baseInteraction);
+
+    const [drawCanvasRef, drawCanvas, drawContext] = useCanvas();
+    const [renderCanvasRef, renderCanvas, renderContext] = useCanvas("white");
+
     const [lastCoords, setLastCoords] = useState(null);
     
-    const history = useStore(state => state.history);
-    const addToHistory = useStore(state => state.addToHistory);
     const currentLine = useStore(state => state.currentLine);
     const startCurrentLine = useStore(state => state.startCurrentLine);
     const addToCurrentLine = useStore(state => state.addToCurrentLine);
     const clearCurrentLine = useStore(state => state.clearCurrentLine);
-
-    //Helper functions
-
-    const getCanvasData = () => {
-        return context.getImageData(0, 0, canvas.width, canvas.height);
-    }
 
     //Events
     const pointerDown = (event) => {
@@ -56,7 +29,7 @@ const DrawArea = (props) => {
             return;
         }
 
-        context.beginPath();
+        drawContext.beginPath();
 
         const { clientX: x, clientY: y } = event;
         startCurrentLine();
@@ -70,7 +43,7 @@ const DrawArea = (props) => {
             const node = { x, y };
 
             addToCurrentLine(node);
-            drawLineSection(context, lastCoords, node, currentLine.size, currentLine.color);
+            drawLineSection(drawContext, lastCoords, node, currentLine.size, currentLine.color);
             setLastCoords(node);
         }
     }
@@ -82,47 +55,76 @@ const DrawArea = (props) => {
             return;
         }
 
-        const canvasData = getCanvasData();
+        //Apply the drawing layer to the rendering layer
+        renderContext.drawImage(drawCanvas, 0, 0);
+        clearCanvas(drawCanvas, drawContext);
+        const encodedCanvasData = getEncodedCanvasData(renderCanvas);
 
-        addInteraction(currentLine);
+        addInteraction(ADD, encodedCanvasData);
         clearCurrentLine();
         setLastCoords(null);
-        addToHistory(canvasData);
     }
 
+    //Render the connected session's content once loaded
     useEffect(() => {
-        if(!context || !canvas) {
+        if(!renderContext || !session || session.interactions.length === 0) { 
             return;
         }
 
-        context.clearRect(0, 0, canvas.width, canvas.height);
+        const latestInteraction = session.interactions[session.interactions.length - 1];
+        const { data: base64Image } = latestInteraction;
+        pasteBase64(renderCanvas, renderContext, base64Image);
+    }, [session, renderCanvas, renderContext]);
 
-        if(history.length === 0) {
-            return;
-        }
-
-        const currentInstance = history[history.length - 1];
-        context.putImageData(currentInstance, 0, 0);
-    }, [context, canvas, history]);
-
+    //Render all new interactions added to history
     useEffect(() => {
-        if(!context || !newInteraction) { 
+        if(!renderContext || !history) { 
             return;
         }
 
-        const { color, nodes, size } = newInteraction.data;
-        drawLine(context, nodes, size, color);
-    }, [newInteraction, context]);
+        let latestInteraction;
+        if(history.length === 0 && !baseInteraction) {
+            clearCanvas(renderCanvas, renderContext);
+            return;
+        }
+        else if(history.length === 0 && !!baseInteraction) {
+            latestInteraction = baseInteraction;
+        }
+        else {
+            latestInteraction = history[history.length - 1];
+        }
+
+        const { data: base64Image } = latestInteraction;
+        pasteBase64(renderCanvas, renderContext, base64Image);
+    }, [history, baseInteraction, renderCanvas, renderContext]);
+
+    const canvasSizing = useMemo(() => {
+        return {
+            width,
+            height
+        }
+    }, [width, height]);
 
     return <>
+        {/* draw-canvas canvas acts as the interaction layer and is clientside only. Drawing, dragging, etc happens here */}
         <canvas
             className="draw-canvas"
-            ref={canvasRef}
+            ref={drawCanvasRef}
             width={width}
             height={height}
             onPointerDown={pointerDown}
             onPointerUp={pointerUp}
             onPointerMove={pointerMove}
+            style={canvasSizing}
+        />
+
+        {/* render-canvas canvas acts as the display layer and renders the latest snapshot from the server */}
+        <canvas
+            className="render-canvas"
+            ref={renderCanvasRef}
+            width={width}
+            height={height}
+            style={canvasSizing}
         />
     </>
 }

@@ -1,43 +1,19 @@
 import create from 'zustand'
 
 const useStore = create(set => ({
-    session: undefined,
-    setSession: (session) => set({ session }),
-    addInteraction: (interaction) => set(state => {
-        return {
-            session: {
-                ...state.session,
-                interactions: [...state.session.interactions, interaction]
-            }
-        }
-    }),
+    baseInteraction: undefined,
+    setBaseInteraction: (baseInteraction) => set({ baseInteraction }),
 
     history: [],
-    addToHistory: (instance) => set(state => {
+    addToHistory: (interaction) => set((state) => {
         return {
-            history: [...state.history, instance],
-            undoStack: []
+            history: [...state.history, interaction],
         }
     }),
-
-    currentLine: {},
-    startCurrentLine: () => set((state) => ({
-        currentLine: {
-            color: state.color,
-            size: state.size,
-            nodes: []
-        }
-    })),
-    addToCurrentLine: (node) => set(state => ({
-        currentLine: {
-            ...state.currentLine,
-            nodes: [...state.currentLine.nodes, node]
-        }
-    })),
-    clearCurrentLine: () => set({currentLine: {}}),
 
     undoStack: [],
     undo: () => set(state => {
+        console.log(state.history);
         if(state.history.length === 0) {
             return;
         }
@@ -59,6 +35,22 @@ const useStore = create(set => ({
             undoStack: state.undoStack.slice(0, lastIndex)
         }
     }),
+
+    currentLine: {},
+    startCurrentLine: () => set((state) => ({
+        currentLine: {
+            color: state.color,
+            size: state.size,
+            nodes: []
+        }
+    })),
+    addToCurrentLine: (node) => set(state => ({
+        currentLine: {
+            ...state.currentLine,
+            nodes: [...state.currentLine.nodes, node]
+        }
+    })),
+    clearCurrentLine: () => set({currentLine: {}}),
 
     color: "#000000",
     setColor: (color) => set({ color }),

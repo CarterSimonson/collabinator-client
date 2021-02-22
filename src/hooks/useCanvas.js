@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-const useCanvas = () => {
+const useCanvas = (fillColor) => {
     const canvasRef = useRef(null);
     const [canvas, setCanvas] = useState(null);
     const [context, setContext] = useState(null);

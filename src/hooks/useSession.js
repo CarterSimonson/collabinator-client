@@ -1,11 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery, gql, useMutation, useSubscription } from '@apollo/client';
 import useStore from 'store';
+import { v4 as uuidv4 } from 'uuid';
 
 const SESSION_QUERY = gql`
     query {
         session {
             interactions {
+                action,
+                userId,
                 timestamp,
                 data
             }
@@ -13,9 +16,11 @@ const SESSION_QUERY = gql`
     }
 `;
 
-const ADD_INTERACTION_MUTATION = gql`
-    mutation AddInteraction($timestamp: String!, $data: JSON!) {
-        addInteraction(timestamp: $timestamp, data: $data) {
+const PUSH_INTERACTION_MUTATION = gql`
+    mutation PushInteraction($action: InteractionAction!, $userId: ID!, $timestamp: String!, $data: JSON!) {
+        pushInteraction(action: $action, userId: $userId, timestamp: $timestamp, data: $data) {
+            action,
+            userId,
             timestamp,
             data
         }
@@ -25,6 +30,8 @@ const ADD_INTERACTION_MUTATION = gql`
 const NEW_INTERACTION_SUBSCRIPTION = gql`
     subscription {
         newInteraction {
+            action,
+            userId,
             timestamp,
             data
         }
@@ -32,30 +39,30 @@ const NEW_INTERACTION_SUBSCRIPTION = gql`
 `;
 
 const useSession = () => {
-    const session = useStore(state => state.session);
-    const setSession = useStore(state => state.setSession);
-    const addInteractionToSession = useStore(state => state.addInteraction);
+    const userId = useMemo(uuidv4, []);
+    const [session, setSession] = useState(undefined);
+
+    const addToHistory = useStore(state => state.addToHistory);
 
     const { data: sessionData } = useQuery(SESSION_QUERY);
-    const [addInteractionMutation] = useMutation(ADD_INTERACTION_MUTATION);
+    const [pushInteractionMutation] = useMutation(PUSH_INTERACTION_MUTATION);
     const { data: newInteractionData } = useSubscription(NEW_INTERACTION_SUBSCRIPTION);
     const newInteraction = newInteractionData?.newInteraction;
 
-    const addInteraction = (data) => {
+    const pushInteraction = (action, data) => {
         const timestamp = new Date().toJSON();
 
         const interaction = {
+            action,
+            userId,
             timestamp,
             data
         }
 
-        addInteractionToSession(interaction);
+        addToHistory(interaction);
 
-        addInteractionMutation({
-            variables: {
-                timestamp,
-                data
-            }
+        pushInteractionMutation({
+            variables: interaction
         });
     }
 
@@ -66,17 +73,17 @@ const useSession = () => {
 
         const { session } = sessionData;
         setSession(session);
-    }, [sessionData, setSession])
+    }, [sessionData]);
 
     useEffect(() => {
-        if(!newInteraction) {
+        if(!newInteraction || newInteraction.userId === userId) {
             return;
         }
 
-        addInteractionToSession(newInteraction);
-    }, [newInteraction, addInteractionToSession]);
+        addToHistory(newInteraction);
+    }, [newInteraction, addToHistory, userId]);
 
-    return [newInteraction, addInteraction];
+    return [session, pushInteraction];
 };
 
 export default useSession;
