@@ -13,16 +13,8 @@ const COLORS = [
 ];
 
 const Toolbar = () => {
-    const undo = useStore(state => state.undo);
-    const redo = useStore(state => state.redo);
-
-    const onUndoClicked = () => {
-
-    }
-
-    const onRedoClick = () => {
-        //Grab the latest interaction from undoStack, if it exists
-    }
+    const undo = () => {};
+    const redo = () => {};
 
     return <div className="toolbar">
         <div className="section">

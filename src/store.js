@@ -1,56 +1,49 @@
 import create from 'zustand'
+import _ from 'lodash';
 
 const useStore = create(set => ({
-    baseInteraction: undefined,
-    setBaseInteraction: (baseInteraction) => set({ baseInteraction }),
-
-    history: [],
-    addToHistory: (interaction) => set((state) => {
+    session: undefined,
+    setSession: (session) => set({ session }),
+    addToSession: (interaction) => set((state) => {
         return {
-            history: [...state.history, interaction],
+            session: {
+                interactions: [...state.session.interactions, interaction]
+            }
         }
     }),
 
-    undoStack: [],
-    undo: () => set(state => {
-        console.log(state.history);
-        if(state.history.length === 0) {
-            return;
-        }
-
-        const lastIndex = state.history.length - 1;
-        return {
-            history: state.history.slice(0, lastIndex),
-            undoStack: [...state.undoStack, state.history[lastIndex]]
-        };
-    }),
-    redo: () => set(state => {
-        if(state.undoStack.length === 0) {
-            return;
-        }
-
-        const lastIndex = state.undoStack.length - 1;
-        return {
-            history: [...state.history, state.undoStack[lastIndex]],
-            undoStack: state.undoStack.slice(0, lastIndex)
-        }
-    }),
-
-    currentLine: {},
-    startCurrentLine: () => set((state) => ({
-        currentLine: {
+    currentInteraction: undefined,
+    startNewLine: (startNode) => set((state) => ({
+        currentInteraction: {
             color: state.color,
             size: state.size,
-            nodes: []
+            nodes: [startNode]
         }
     })),
-    addToCurrentLine: (node) => set(state => ({
-        currentLine: {
-            ...state.currentLine,
-            nodes: [...state.currentLine.nodes, node]
+    addToCurrentLine: (node) => set((state) => ({
+        currentInteraction: {
+            ...state.currentInteraction,
+            nodes: [...state.currentInteraction.nodes, node]
         }
     })),
-    clearCurrentLine: () => set({currentLine: {}}),
+    completeNewLine: () => set((state) => {
+        if(!state.currentInteraction) {
+            return;
+        }
+
+        return {
+            currentInteraction: undefined,
+            userInteractions: [...state.userInteractions, state.currentInteraction]
+        }
+    }),
+
+    userInteractions: [],
+    removeUserInteraction: (interactionData) => set((state) => {
+        const filteredUserInteractions = state.userInteractions.filter((userInteraction) => !_.isEqual(interactionData, userInteraction));
+        return {
+            userInteractions: filteredUserInteractions
+        }
+    }),
 
     color: "#000000",
     setColor: (color) => set({ color }),
