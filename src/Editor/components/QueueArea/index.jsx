@@ -1,10 +1,10 @@
 import React, { useEffect } from "react";
 import "./QueueArea.scss";
-import { drawLine, clearCanvas } from "util/drawUtil";
+import { drawLine, clearCanvas } from "shared/util/drawUtil";
 import useStore from "store";
-import useCanvas from "hooks/useCanvas";
+import useCanvas from "shared/hooks/useCanvas";
 
-const DrawArea = (props) => {
+const QueueArea = (props) => {
     const { width, height } = props;
 
     const [canvasRef, canvas, context] = useCanvas();
@@ -36,4 +36,4 @@ const DrawArea = (props) => {
     </>
 }
 
-export default DrawArea;
+export default QueueArea;

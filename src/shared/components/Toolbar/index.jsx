@@ -1,8 +1,8 @@
 import React from "react";
 import "./Toolbar.scss";
-import useStore from "store";
-import IconButton from "components/IconButton";
-import ColorButton from "components/ColorButton";
+import IconButton from "shared/components/IconButton";
+import ColorButton from "shared/components/ColorButton";
+import SizeSlider from "shared/components/SizeSlider";
 
 const COLORS = [
     "#000000", // black
@@ -17,6 +17,10 @@ const Toolbar = () => {
     const redo = () => {};
 
     return <div className="toolbar">
+        <div className="section">
+            <SizeSlider/>
+        </div>
+
         <div className="section">
             {
                 COLORS.map(color => <ColorButton color={color}/>)

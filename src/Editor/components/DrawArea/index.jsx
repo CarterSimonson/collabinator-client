@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import "./DrawArea.scss";
-import { drawLineSection, clearCanvas } from "util/drawUtil";
+import { drawLineSection, clearCanvas } from "shared/util/drawUtil";
 import useStore from "store";
-import useCanvas from "hooks/useCanvas";
-import useDrawCursor from "hooks/useDrawCursor";
+import useCanvas from "shared/hooks/useCanvas";
+import useDrawCursor from "shared/hooks/useDrawCursor";
 
 const DrawArea = (props) => {
     const { width, height, pushInteraction } = props;

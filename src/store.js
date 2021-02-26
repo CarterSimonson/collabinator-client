@@ -48,7 +48,7 @@ const useStore = create(set => ({
     color: "#000000",
     setColor: (color) => set({ color }),
 
-    size: 10,
+    size: 100,
     setSize: (size) => set({ size }),
 }));
 

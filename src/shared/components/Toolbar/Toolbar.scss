@@ -1,4 +1,4 @@
-@import "styles/colors.scss";
+@import "shared/styles/colors.scss";
 
 .toolbar {
     height: 48px;
@@ -19,6 +19,8 @@
         border-right: 2px solid $grey-300;
         padding-left: 16px;
         padding-right: 16px;
+        height: 100%;
+        display: flex;
 
         &:first-child {
             padding-left: 0px;

@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import "./RenderArea.scss";
-import { drawLine, clearCanvas } from "util/drawUtil";
-import useCanvas from "hooks/useCanvas";
+import { drawLine, clearCanvas } from "shared/util/drawUtil";
+import useCanvas from "shared/hooks/useCanvas";
 import useStore from "store";
 
 const RenderArea = (props) => {
